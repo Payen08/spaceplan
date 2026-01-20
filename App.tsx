@@ -197,26 +197,45 @@ const App: React.FC = () => {
           {/* PNG Export Button */}
           <button
             onClick={async () => {
-              const html2canvas = (await import('html2canvas')).default;
-              const canvasContainer = document.getElementById('room-canvas') as HTMLElement;
-              if (canvasContainer) {
-                try {
+              try {
+                // Remember current measurement state
+                const wasShowingMeasurements = showMeasurements;
+
+                // Temporarily enable measurements for export
+                if (!wasShowingMeasurements) {
+                  setShowMeasurements(true);
+                  // Wait for React to render the measurements
+                  await new Promise(resolve => setTimeout(resolve, 100));
+                }
+
+                // Import and use html2canvas
+                const html2canvas = (await import('html2canvas')).default;
+                const canvasContainer = document.getElementById('room-canvas') as HTMLElement;
+
+                if (canvasContainer) {
                   const canvas = await html2canvas(canvasContainer, {
                     backgroundColor: '#ffffff',
                     scale: 2, // Higher quality
                   });
+
+                  // Create download link
                   const link = document.createElement('a');
                   const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
                   link.download = `${currentProject.name}-${timestamp}.png`;
                   link.href = canvas.toDataURL('image/png');
                   link.click();
-                } catch (error) {
-                  console.error('导出失败:', error);
-                  alert('导出PNG失败，请重试');
+
+                  // Restore original measurement state
+                  if (!wasShowingMeasurements) {
+                    setShowMeasurements(false);
+                  }
+                } else {
+                  console.error('Canvas element not found');
+                  alert('无法找到画布元素，请刷新页面后重试');
                 }
-              } else {
-                console.error('Canvas element not found');
-                alert('无法找到画布元素，请刷新页面后重试');
+              } catch (error) {
+                console.error('导出失败:', error);
+                alert('导出PNG失败，请重试');
               }
             }}
             className="p-2 rounded shadow-sm border bg-white/90 backdrop-blur text-slate-600 border-slate-200 hover:bg-slate-50 transition-colors flex items-center gap-2 text-sm font-medium"
