@@ -1,0 +1,5 @@
+{
+  "name": "SpacePlan AI",
+  "description": "一个交互式室内设计工具，允许用户定义房间尺寸，拖放家具，并使用 Gemini AI 生成最佳空间布局。",
+  "requestFramePermissions": []
+}
