@@ -1,43 +1,38 @@
 export interface Dimensions {
-  width: number; // in meters
-  length: number; // in meters
+  width: number; // meters
+  length: number; // meters
 }
 
 export interface FurnitureItem {
   id: string;
   name: string;
   type: FurnitureType;
-  x: number; // meters from left
-  y: number; // meters from top
   width: number; // meters
   depth: number; // meters
+  x: number; // meters
+  y: number; // meters
   rotation: number; // degrees
   color: string;
-  locked?: boolean; // New property for locking position
-  lightRange?: number; // New property: Light illumination radius in meters
+  locked?: boolean;
+  lightRange?: number; // meters, for LIGHT type
 }
 
 export enum FurnitureType {
   BED = 'BED',
+  SOFA = 'SOFA',
   TABLE = 'TABLE',
   CHAIR = 'CHAIR',
-  SOFA = 'SOFA',
   WARDROBE = 'WARDROBE',
-  CUSTOM = 'CUSTOM',
   DOOR = 'DOOR',
-  WINDOW = 'WINDOW',
-  LIGHT = 'LIGHT'
+  LIGHT = 'LIGHT',
+  CUSTOM = 'CUSTOM',
 }
 
-export interface RoomConfig {
-  roomName: string;
+export interface Project {
+  id: string;
+  name: string;
   dimensions: Dimensions;
   items: FurnitureItem[];
+  createdAt: number;
+  updatedAt: number;
 }
-
-export type AISuggestionRequest = {
-  roomType: string;
-  width: number;
-  length: number;
-  requirements: string;
-};

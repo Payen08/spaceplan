@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Dimensions, FurnitureItem, FurnitureType } from '../types';
+import { Dimensions, FurnitureItem, FurnitureType, Project } from '../types';
 import { FURNITURE_PRESETS, ROOM_TYPES } from '../constants';
 
 interface SidebarProps {
@@ -11,6 +11,12 @@ interface SidebarProps {
   onDeleteItem: (id: string) => void;
   onGenerateAI: (description: string, roomType: string) => void;
   isGenerating: boolean;
+  projects: Project[];
+  currentProject: Project;
+  onCreateProject: () => void;
+  onSwitchProject: (id: string) => void;
+  onRenameProject: (id: string, name: string) => void;
+  onDeleteProject: (id: string) => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -21,8 +27,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onUpdateItem,
   onDeleteItem,
   onGenerateAI,
-  isGenerating
+  isGenerating,
+  projects,
+  currentProject,
+  onCreateProject,
+  onSwitchProject,
+  onRenameProject,
+  onDeleteProject,
 }) => {
+  const [isEditingProjectName, setIsEditingProjectName] = useState(false);
+  const [editingProjectName, setEditingProjectName] = useState(currentProject.name);
   const [activeTab] = useState<'build' | 'ai'>('build');
   const [prompt, setPrompt] = useState('');
   const [roomType, setRoomType] = useState(ROOM_TYPES[0]);
@@ -79,10 +93,81 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <div className="w-80 h-full bg-white border-r border-slate-200 flex flex-col shadow-lg z-10">
       <div className="p-4 border-b border-slate-200 bg-slate-50">
-        <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+        <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2 mb-2">
           <span className="text-indigo-600">▪</span> SpacePlan AI
         </h1>
-        <p className="text-xs text-slate-500 mt-1">智能室内空间布局设计</p>
+        <p className="text-xs text-slate-500 mb-3">智能室内空间布局设计</p>
+
+        {/* Project Selector */}
+        <div className="flex gap-2 items-center">
+          {isEditingProjectName ? (
+            <input
+              type="text"
+              value={editingProjectName}
+              onChange={(e) => setEditingProjectName(e.target.value)}
+              onBlur={() => {
+                if (editingProjectName.trim()) {
+                  onRenameProject(currentProject.id, editingProjectName.trim());
+                  setIsEditingProjectName(false);
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && editingProjectName.trim()) {
+                  onRenameProject(currentProject.id, editingProjectName.trim());
+                  setIsEditingProjectName(false);
+                } else if (e.key === 'Escape') {
+                  setEditingProjectName(currentProject.name);
+                  setIsEditingProjectName(false);
+                }
+              }}
+              autoFocus
+              className="flex-1 px-2 py-1.5 text-sm border border-indigo-300 rounded focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+            />
+          ) : (
+            <select
+              value={currentProject.id}
+              onChange={(e) => onSwitchProject(e.target.value)}
+              className="flex-1 px-2 py-1.5 bg-white border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+            >
+              {projects.map((project) => (
+                <option key={project.id} value={project.id}>
+                  {project.name}
+                </option>
+              ))}
+            </select>
+          )}
+          <button
+            onClick={() => {
+              setEditingProjectName(currentProject.name);
+              setIsEditingProjectName(!isEditingProjectName);
+            }}
+            className="p-1.5 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
+            title="重命名项目"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+            </svg>
+          </button>
+          <button
+            onClick={() => onCreateProject()}
+            className="p-1.5 text-white bg-indigo-600 hover:bg-indigo-700 rounded transition-colors"
+            title="新建项目"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+          </button>
+          <button
+            onClick={() => onDeleteProject(currentProject.id)}
+            disabled={projects.length <= 1}
+            className="p-1.5 text-red-600 hover:text-red-700 hover:bg-red-50 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            title="删除项目"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+            </svg>
+          </button>
+        </div>
       </div>
 
       {/* Tabs - AI tab hidden */}

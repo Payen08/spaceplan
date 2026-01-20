@@ -2,18 +2,46 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { RoomCanvas } from './components/RoomCanvas';
 import { Sidebar } from './components/Sidebar';
 import { Dimensions, FurnitureItem, FurnitureType } from './types';
-import { DEFAULT_ROOM_DIMS } from './constants';
 import { generateLayoutSuggestion } from './services/geminiService';
+import { useProjects } from './hooks/useProjects';
 
 const App: React.FC = () => {
-  const [dimensions, setDimensions] = useState<Dimensions>(DEFAULT_ROOM_DIMS);
+  // Project Management
+  const {
+    projects,
+    currentProject,
+    createProject,
+    deleteProject,
+    switchProject,
+    renameProject,
+    updateCurrentProject,
+  } = useProjects();
+
+  const [dimensions, setDimensions] = useState<Dimensions>(currentProject.dimensions);
 
   // History State Management
-  const [history, setHistory] = useState<FurnitureItem[][]>([[]]);
+  const [history, setHistory] = useState<FurnitureItem[][]>([currentProject.items]);
   const [historyIndex, setHistoryIndex] = useState(0);
 
   // Derived current state
   const items = history[historyIndex];
+
+  // Sync dimensions and items when project changes
+  useEffect(() => {
+    setDimensions(currentProject.dimensions);
+    setHistory([currentProject.items]);
+    setHistoryIndex(0);
+    setSelectedId(null);
+  }, [currentProject.id]);
+
+  // Auto-save to localStorage when items or dimensions change
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      updateCurrentProject({ dimensions, items });
+    }, 500); // Debounce 500ms
+
+    return () => clearTimeout(timeoutId);
+  }, [items, dimensions]);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -154,12 +182,49 @@ const App: React.FC = () => {
         onDeleteItem={handleDeleteItem}
         onGenerateAI={handleGenerateAI}
         isGenerating={isGenerating}
+        projects={projects}
+        currentProject={currentProject}
+        onCreateProject={createProject}
+        onSwitchProject={switchProject}
+        onRenameProject={renameProject}
+        onDeleteProject={deleteProject}
       />
 
       {/* Main Canvas Area */}
       <main className="flex-1 relative flex flex-col">
-        {/* Controls Bar: Undo/Redo + Measurements */}
+        {/* Controls Bar: Undo/Redo + Measurements + Export */}
         <div className="absolute top-4 right-4 z-20 flex gap-2">
+          {/* PNG Export Button */}
+          <button
+            onClick={async () => {
+              const html2canvas = (await import('html2canvas')).default;
+              const canvasContainer = document.querySelector('.bg-white.shadow-2xl') as HTMLElement;
+              if (canvasContainer) {
+                try {
+                  const canvas = await html2canvas(canvasContainer, {
+                    backgroundColor: '#ffffff',
+                    scale: 2, // Higher quality
+                  });
+                  const link = document.createElement('a');
+                  const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+                  link.download = `${currentProject.name}-${timestamp}.png`;
+                  link.href = canvas.toDataURL('image/png');
+                  link.click();
+                } catch (error) {
+                  console.error('导出失败:', error);
+                  alert('导出PNG失败，请重试');
+                }
+              }
+            }}
+            className="p-2 rounded shadow-sm border bg-white/90 backdrop-blur text-slate-600 border-slate-200 hover:bg-slate-50 transition-colors flex items-center gap-2 text-sm font-medium"
+            title="导出为PNG"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            <span>导出PNG</span>
+          </button>
+
           {/* Measurement Toggle */}
           <button
             onClick={() => setShowMeasurements(!showMeasurements)}
