@@ -650,8 +650,7 @@ export const RoomCanvas: React.FC<RoomCanvasProps> = ({
             onItemsChange(items.map(item =>
               item.id === d.id ? { ...item, rotation: d.rotation } : item
             ));
-          })
-        as any
+          }) as any
       );
 
     // EXIT
