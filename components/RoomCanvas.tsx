@@ -584,6 +584,76 @@ export const RoomCanvas: React.FC<RoomCanvasProps> = ({
       .attr('cy', d => d.depth * PIXELS_PER_METER)
       .call(resizeBehavior as any);
 
+    // --- ROTATION HANDLE ---
+    // Rotation handle above the furniture item
+    const rotateHandle = groupsMerge.selectAll<SVGCircleElement, FurnitureItem>('.rotate-handle')
+      .data(d => (d.id === selectedId && !d.locked) ? [d] : []);
+
+    rotateHandle.exit().remove();
+
+    const rotateHandleEnter = rotateHandle.enter()
+      .append('g')
+      .attr('class', 'rotate-handle');
+
+    // Add connecting line
+    rotateHandleEnter.append('line')
+      .attr('class', 'rotate-line')
+      .attr('x1', 0)
+      .attr('y1', 0)
+      .attr('x2', 0)
+      .attr('y2', -30)
+      .style('stroke', '#2563eb')
+      .style('stroke-width', 2);
+
+    // Add rotation handle circle
+    rotateHandleEnter.append('circle')
+      .attr('class', 'rotate-circle')
+      .attr('r', 8)
+      .style('fill', '#10b981')
+      .style('stroke', '#fff')
+      .style('stroke-width', 2)
+      .style('cursor', 'grab');
+
+    // Update rotation handle position
+    rotateHandleEnter.merge(rotateHandle as any)
+      .attr('transform', d => `translate(${(d.width * PIXELS_PER_METER) / 2}, ${-5})`)
+      .call(
+        d3.drag<SVGGElement, FurnitureItem>()
+          .on('start', function (event, d) {
+            d3.select(this).select('.rotate-circle').style('cursor', 'grabbing');
+          })
+          .on('drag', function (event, d) {
+            const parentTransform = d3.select(this.parentNode as SVGGElement);
+            const centerX = d.x * PIXELS_PER_METER + (d.width * PIXELS_PER_METER) / 2;
+            const centerY = d.y * PIXELS_PER_METER + (d.depth * PIXELS_PER_METER) / 2;
+
+            // Calculate angle from center to mouse
+            const angle = Math.atan2(
+              event.y - centerY,
+              event.x - centerX
+            ) * (180 / Math.PI) + 90; // +90 to make 0° point up
+
+            // Update rotation (snap to 15° increments when Shift is pressed)
+            const newRotation = event.sourceEvent.shiftKey
+              ? Math.round(angle / 15) * 15
+              : Math.round(angle);
+
+            // Apply rotation immediately for visual feedback
+            parentTransform.attr('transform',
+              `translate(${d.x * PIXELS_PER_METER},${d.y * PIXELS_PER_METER}) rotate(${newRotation})`
+            );
+
+            d.rotation = newRotation;
+          })
+          .on('end', function (event, d) {
+            d3.select(this).select('.rotate-circle').style('cursor', 'grab');
+            onItemsChange(items.map(item =>
+              item.id === d.id ? { ...item, rotation: d.rotation } : item
+            ));
+          })
+        as any
+      );
+
     // EXIT
     groups.exit().remove();
 
