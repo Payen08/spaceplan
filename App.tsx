@@ -198,7 +198,7 @@ const App: React.FC = () => {
           <button
             onClick={async () => {
               const html2canvas = (await import('html2canvas')).default;
-              const canvasContainer = document.querySelector('.bg-white.shadow-2xl') as HTMLElement;
+              const canvasContainer = document.getElementById('room-canvas') as HTMLElement;
               if (canvasContainer) {
                 try {
                   const canvas = await html2canvas(canvasContainer, {
@@ -214,6 +214,9 @@ const App: React.FC = () => {
                   console.error('导出失败:', error);
                   alert('导出PNG失败，请重试');
                 }
+              } else {
+                console.error('Canvas element not found');
+                alert('无法找到画布元素，请刷新页面后重试');
               }
             }}
             className="p-2 rounded shadow-sm border bg-white/90 backdrop-blur text-slate-600 border-slate-200 hover:bg-slate-50 transition-colors flex items-center gap-2 text-sm font-medium"
