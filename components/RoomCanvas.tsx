@@ -601,26 +601,33 @@ export const RoomCanvas: React.FC<RoomCanvasProps> = ({
       .attr('x1', 0)
       .attr('y1', 0)
       .attr('x2', 0)
-      .attr('y2', -30)
-      .style('stroke', '#2563eb')
-      .style('stroke-width', 2);
+      .attr('y2', -40)
+      .style('stroke', '#10b981')
+      .style('stroke-width', 2)
+      .style('stroke-dasharray', '3,3');
 
     // Add rotation handle circle
     rotateHandleEnter.append('circle')
       .attr('class', 'rotate-circle')
+      .attr('cy', -40)
       .attr('r', 8)
       .style('fill', '#10b981')
       .style('stroke', '#fff')
       .style('stroke-width', 2)
       .style('cursor', 'grab');
 
-    // Update rotation handle position
+    // Update rotation handle position and rotation
     rotateHandleEnter.merge(rotateHandle as any)
-      .attr('transform', d => `translate(${(d.width * PIXELS_PER_METER) / 2}, ${-5})`)
+      .attr('transform', d => `translate(${(d.width * PIXELS_PER_METER) / 2}, ${(d.depth * PIXELS_PER_METER) / 2}) rotate(${d.rotation})`)
       .call(
         d3.drag<SVGGElement, FurnitureItem>()
           .on('start', function (event, d) {
             d3.select(this).select('.rotate-circle').style('cursor', 'grabbing');
+            const cx = d.x * PIXELS_PER_METER + (d.width * PIXELS_PER_METER) / 2;
+            const cy = d.y * PIXELS_PER_METER + (d.depth * PIXELS_PER_METER) / 2;
+            const startAngle = Math.atan2(event.y - cy, event.x - cx) * (180 / Math.PI);
+            (d as any)._startAngle = startAngle;
+            (d as any)._startRot = d.rotation;
           })
           .on('drag', function (event, d) {
             const parentTransform = d3.select(this.parentNode as SVGGElement);
@@ -647,6 +654,8 @@ export const RoomCanvas: React.FC<RoomCanvasProps> = ({
           })
           .on('end', function (event, d) {
             d3.select(this).select('.rotate-circle').style('cursor', 'grab');
+            delete (d as any)._startAngle;
+            delete (d as any)._startRot;
             onItemsChange(items.map(item =>
               item.id === d.id ? { ...item, rotation: d.rotation } : item
             ));
