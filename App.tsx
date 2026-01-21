@@ -5,6 +5,7 @@ import { Dimensions, FurnitureItem, FurnitureType } from './types';
 import { generateLayoutSuggestion } from './services/geminiService';
 import { useProjects } from './hooks/useProjects';
 import { useCloudSync } from './hooks/useCloudSync';
+import { useShareMode } from './hooks/useShareMode';
 import { exportCanvasAsPNG } from './utils/exportPNG';
 
 const App: React.FC = () => {
@@ -41,8 +42,14 @@ const App: React.FC = () => {
   const cloudSync = useCloudSync();
   const isSyncingRef = useRef(false);
 
-  // Auto-save to localStorage when items or dimensions change
+  // Share Mode Hook
+  const shareMode = useShareMode();
+
+  // Auto-save to localStorage when items or dimensions change (disabled in read-only mode)
   useEffect(() => {
+    // Skip auto-save in read-only share mode
+    if (shareMode.isReadOnly) return;
+
     const timeoutId = setTimeout(() => {
       updateCurrentProject({ dimensions, items });
 

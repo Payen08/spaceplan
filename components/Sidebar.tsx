@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Dimensions, FurnitureItem, FurnitureType, Project } from '../types';
+import { ShareMode } from '../hooks/useShareMode';
 import { FURNITURE_PRESETS, ROOM_TYPES } from '../constants';
 
 interface SidebarProps {
@@ -18,6 +19,8 @@ interface SidebarProps {
   onRenameProject: (id: string, name: string) => void;
   onDeleteProject: (id: string) => void;
   cloudSync: ReturnType<typeof import('../hooks/useCloudSync').useCloudSync>;
+  shareMode: ShareMode;
+  isReadOnly: boolean;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -36,6 +39,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onRenameProject,
   onDeleteProject,
   cloudSync,
+  shareMode,
+  isReadOnly
 }) => {
   const [isEditingProjectName, setIsEditingProjectName] = useState(false);
   const [editingProjectName, setEditingProjectName] = useState(currentProject.name);
