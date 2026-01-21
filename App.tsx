@@ -253,21 +253,42 @@ const App: React.FC = () => {
 
       {/* Main Canvas Area */}
       <main className="flex-1 relative flex flex-col">
-        {/* Cloud Sync Status - Top Right */}
-        <div className="absolute top-4 left-4 z-20 flex items-center gap-2 bg-white/90 backdrop-blur-sm px-3 py-2 rounded-lg shadow-sm border border-slate-200">
-          <span className="text-xs text-slate-500">同步ID:</span>
-          <code className="text-xs font-mono bg-slate-100 px-2 py-1 rounded">
-            {currentProject.id.slice(0, 8)}...
-          </code>
+        {/* Cloud Sync Status - Top Left */}
+        <div className="absolute top-4 left-4 z-20 flex items-center gap-2">
+          {/* Sync ID Input - Editable */}
+          <div className="flex items-center gap-2 p-2 rounded shadow-sm border bg-white/90 backdrop-blur border-slate-200">
+            <span className="text-xs text-slate-500">同步ID:</span>
+            <input
+              type="text"
+              defaultValue={currentProject.id}
+              onKeyDown={async (e) => {
+                if (e.key === 'Enter') {
+                  const id = (e.target as HTMLInputElement).value.trim();
+                  if (id && id !== currentProject.id) {
+                    const project = await cloudSync.loadFromCloud(id);
+                    if (project) {
+                      alert(`✅ 项目已从云端加载！\n${project.name}`);
+                      (e.target as HTMLInputElement).value = currentProject.id;
+                    } else {
+                      alert(`❌ 加载失败：${cloudSync.status.syncError || '项目不存在'}`);
+                      (e.target as HTMLInputElement).value = currentProject.id;
+                    }
+                  }
+                }
+              }}
+              placeholder="输入ID按Enter加载"
+              className="text-xs font-mono bg-transparent border-none outline-none w-32 text-slate-700"
+            />
+          </div>
+
+          {/* Sync Status Badge */}
           {cloudSync.status.isSyncing ? (
-            <span className="text-xs text-blue-500">🔄 同步中</span>
+            <span className="text-xs px-2 py-1 bg-blue-50 text-blue-600 rounded border border-blue-200">🔄 同步中</span>
           ) : cloudSync.status.lastSyncTime ? (
-            <span className="text-xs text-green-500" title={`最后同步: ${cloudSync.status.lastSyncTime.toLocaleString()}`}>
+            <span className="text-xs px-2 py-1 bg-green-50 text-green-600 rounded border border-green-200" title={`最后同步: ${cloudSync.status.lastSyncTime.toLocaleString()}`}>
               ✓ 已同步
             </span>
-          ) : (
-            <span className="text-xs text-gray-400">⚪ 未配置</span>
-          )}
+          ) : null}
         </div>
 
         {/* Controls Bar: Undo/Redo + Measurements + Export */}
