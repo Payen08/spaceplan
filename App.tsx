@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { RoomCanvas } from './components/RoomCanvas';
 import { Sidebar } from './components/Sidebar';
 import { Dimensions, FurnitureItem, FurnitureType } from './types';
@@ -17,6 +17,7 @@ const App: React.FC = () => {
     switchProject,
     renameProject,
     updateCurrentProject,
+    loadCloudProjects, // For cloud sync
   } = useProjects();
 
   const [dimensions, setDimensions] = useState<Dimensions>(currentProject.dimensions);
@@ -38,22 +39,37 @@ const App: React.FC = () => {
 
   // Cloud Sync Hook
   const cloudSync = useCloudSync();
+  const isSyncingRef = useRef(false);
 
   // Auto-save to localStorage when items or dimensions change
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       updateCurrentProject({ dimensions, items });
 
-      // Auto-sync to cloud if configured
-      if (cloudSync) {
-        cloudSync.saveToCloud(currentProject).catch(err => {
-          console.error('Auto cloud sync failed:', err);
-        });
+      // Auto-sync to cloud if configured (debounced and prevent infinite loop)
+      if (cloudSync && !isSyncingRef.current) {
+        isSyncingRef.current = true;
+
+        // Build updated project with latest data
+        const updatedProject = {
+          ...currentProject,
+          dimensions,
+          items,
+          updatedAt: Date.now()
+        };
+
+        cloudSync.saveToCloud(updatedProject)
+          .catch(err => console.error('Auto cloud sync failed:', err))
+          .finally(() => {
+            setTimeout(() => {
+              isSyncingRef.current = false;
+            }, 1000); // Cooldown period
+          });
       }
     }, 500); // Debounce 500ms
 
     return () => clearTimeout(timeoutId);
-  }, [items, dimensions, currentProject, cloudSync, updateCurrentProject]);
+  }, [items, dimensions]); // Remove cloudSync and currentProject from deps
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -255,29 +271,41 @@ const App: React.FC = () => {
       <main className="flex-1 relative flex flex-col">
         {/* Cloud Sync Status - Top Left */}
         <div className="absolute top-4 left-4 z-20 flex items-center gap-2">
-          {/* Sync ID Input - Editable */}
+          {/* Account ID Input */}
           <div className="flex items-center gap-2 p-2 rounded shadow-sm border bg-white/90 backdrop-blur border-slate-200">
-            <span className="text-xs text-slate-500">同步ID:</span>
+            <span className="text-xs text-slate-500">账号ID:</span>
             <input
               type="text"
-              defaultValue={currentProject.id}
+              defaultValue={cloudSync.getAccountId() || ''}
               onKeyDown={async (e) => {
                 if (e.key === 'Enter') {
-                  const id = (e.target as HTMLInputElement).value.trim();
-                  if (id && id !== currentProject.id) {
-                    const project = await cloudSync.loadFromCloud(id);
-                    if (project) {
-                      alert(`✅ 项目已从云端加载！\n${project.name}`);
-                      (e.target as HTMLInputElement).value = currentProject.id;
+                  const accountId = (e.target as HTMLInputElement).value.trim();
+                  if (accountId) {
+                    // Set account ID
+                    cloudSync.setAccountId(accountId);
+
+                    // Load all projects from this account
+                    const cloudProjects = await cloudSync.loadAccountProjects(accountId);
+
+                    if (cloudProjects.length > 0) {
+                      // Merge cloud projects with local
+                      loadCloudProjects(cloudProjects);
+                      alert(`✅ 已连接账号: ${accountId}\n成功加载 ${cloudProjects.length} 个项目`);
                     } else {
-                      alert(`❌ 加载失败：${cloudSync.status.syncError || '项目不存在'}`);
-                      (e.target as HTMLInputElement).value = currentProject.id;
+                      // New account, just set it
+                      alert(`✅ 账号已设置: ${accountId}\n\n你的项目将自动同步到此账号`);
                     }
                   }
                 }
               }}
-              placeholder="输入ID按Enter加载"
-              className="text-xs font-mono bg-transparent border-none outline-none w-32 text-slate-700"
+              onBlur={(e) => {
+                const accountId = e.target.value.trim();
+                if (accountId && accountId !== cloudSync.getAccountId()) {
+                  cloudSync.setAccountId(accountId);
+                }
+              }}
+              placeholder="输入账号ID"
+              className="text-xs font-mono bg-transparent border-none outline-none w-24 text-slate-700"
             />
           </div>
 

@@ -79,6 +79,34 @@ export function useProjects() {
         updateState({ projects: newProjects });
     }, [state.projects, updateState]);
 
+    // Load and merge cloud projects
+    const loadCloudProjects = useCallback((cloudProjects: Project[]) => {
+        // Merge cloud projects with local, preferring newer versions
+        const mergedMap = new Map<string, Project>();
+
+        // Add local projects first
+        state.projects.forEach(p => mergedMap.set(p.id, p));
+
+        // Merge cloud projects (newer wins)
+        cloudProjects.forEach(cp => {
+            const existing = mergedMap.get(cp.id);
+            if (!existing || cp.updatedAt > existing.updatedAt) {
+                mergedMap.set(cp.id, cp);
+            }
+        });
+
+        const merged = Array.from(mergedMap.values())
+            .sort((a, b) => b.updatedAt - a.updatedAt);
+
+        // Switch to the most recently updated cloud project (first in sorted list)
+        const firstCloudProject = cloudProjects.length > 0 ? merged[0] : null;
+
+        updateState({
+            projects: merged,
+            currentProjectId: firstCloudProject?.id || currentProjectId
+        });
+    }, [state.projects, currentProjectId, updateState]);
+
     const updateCurrentProject = useCallback((
         updates: { dimensions?: Dimensions; items?: FurnitureItem[] }
     ) => {
@@ -99,5 +127,6 @@ export function useProjects() {
         switchProject,
         renameProject,
         updateCurrentProject,
+        loadCloudProjects, // For cloud sync integration
     };
 }
