@@ -272,6 +272,8 @@ const App: React.FC = () => {
         onRenameProject={renameProject}
         onDeleteProject={deleteProject}
         cloudSync={cloudSync}
+        shareMode={shareMode}
+        isReadOnly={shareMode.isReadOnly}
       />
 
       {/* Main Canvas Area */}
