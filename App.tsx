@@ -221,6 +221,33 @@ const App: React.FC = () => {
                 console.log('Canvas container:', canvasContainer);
 
                 if (canvasContainer) {
+                  // Temporarily replace all oklab colors with fallback colors
+                  console.log('Preprocessing colors for html2canvas compatibility...');
+                  const elementsWithOklab: Array<{ element: HTMLElement, property: string, originalValue: string }> = [];
+
+                  // Find all elements with oklab colors
+                  const allElements = canvasContainer.querySelectorAll('*');
+                  allElements.forEach((el) => {
+                    const htmlEl = el as HTMLElement;
+                    const computedStyle = window.getComputedStyle(htmlEl);
+
+                    // Check common properties
+                    ['color', 'backgroundColor', 'borderColor', 'fill', 'stroke'].forEach((prop) => {
+                      const value = computedStyle.getPropertyValue(prop);
+                      if (value && value.includes('oklab')) {
+                        elementsWithOklab.push({
+                          element: htmlEl,
+                          property: prop,
+                          originalValue: value
+                        });
+                        // Set a fallback color
+                        htmlEl.style.setProperty(prop, '#000', 'important');
+                      }
+                    });
+                  });
+
+                  console.log(`Temporarily replaced ${elementsWithOklab.length} oklab colors`);
+
                   console.log('Generating canvas screenshot...');
                   const canvas = await html2canvas(canvasContainer, {
                     backgroundColor: '#ffffff',
@@ -228,17 +255,21 @@ const App: React.FC = () => {
                     allowTaint: true,
                     useCORS: true,
                     logging: false, // Disable verbose logging
-                    // Ignore problematic elements
-                    ignoreElements: (element) => {
-                      // Skip any element with oklab or other unsupported colors
-                      const style = window.getComputedStyle(element);
-                      return style.color?.includes('oklab') ||
-                        style.backgroundColor?.includes('oklab') ||
-                        style.fill?.includes('oklab') ||
-                        style.stroke?.includes('oklab');
-                    }
                   });
                   console.log('Screenshot generated:', canvas.width, 'x', canvas.height);
+
+                  // Restore original colors
+                  console.log('Restoring original colors...');
+                  elementsWithOklab.forEach(({ element, property, originalValue }) => {
+                    element.style.removeProperty(property);
+                  });
+
+                  // Create download link using blob instead of data URLcolors
+                  console.log('Restoring original colors...');
+                  elementsWithOklab.forEach(({ element, property, originalValue }) => {
+                    element.style.setProperty(property, originalValue);
+                  });
+                  console.log('Colors restored.');
 
                   // Create download link using blob instead of data URL
                   canvas.toBlob((blob) => {
