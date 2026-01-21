@@ -170,6 +170,54 @@ const App: React.FC = () => {
     }
   };
 
+  // Keyboard arrow key controls for moving furniture
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!selectedId) return;
+
+      const selectedItem = items.find(item => item.id === selectedId);
+      if (!selectedItem || selectedItem.locked) return;
+
+      // Don't handle if typing in input
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return;
+
+      const step = e.shiftKey ? 0.1 : 0.01; // Shift = 100mm, normal = 10mm
+      let newX = selectedItem.x;
+      let newY = selectedItem.y;
+
+      switch (e.key) {
+        case 'ArrowLeft':
+          newX = Math.max(0, selectedItem.x - step);
+          e.preventDefault();
+          break;
+        case 'ArrowRight':
+          newX = Math.min(dimensions.width - selectedItem.width, selectedItem.x + step);
+          e.preventDefault();
+          break;
+        case 'ArrowUp':
+          newY = Math.max(0, selectedItem.y - step);
+          e.preventDefault();
+          break;
+        case 'ArrowDown':
+          newY = Math.min(dimensions.length - selectedItem.depth, selectedItem.y + step);
+          e.preventDefault();
+          break;
+        default:
+          return;
+      }
+
+      const updatedItems = items.map(item =>
+        item.id === selectedId ? { ...item, x: newX, y: newY } : item
+      );
+      setHistory([...history.slice(0, historyIndex + 1), updatedItems]);
+      setHistoryIndex(historyIndex + 1);
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedId, items, dimensions, history, historyIndex]);
+
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-slate-50">
 

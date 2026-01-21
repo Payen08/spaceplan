@@ -45,6 +45,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [widthInput, setWidthInput] = useState((Math.round(dimensions.width * 1000)).toString());
   const [lengthInput, setLengthInput] = useState((Math.round(dimensions.length * 1000)).toString());
 
+  // Local state for rotation input editing
+  const [rotationInput, setRotationInput] = useState('0');
+
   // Local state for light range input
   const [lightRangeInput, setLightRangeInput] = useState('');
 
@@ -62,6 +65,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
       setLightRangeInput('');
     }
   }, [selectedItem?.id, selectedItem?.lightRange]);
+
+  // Sync rotation input with selected item
+  useEffect(() => {
+    if (selectedItem) {
+      setRotationInput(selectedItem.rotation.toString());
+    }
+  }, [selectedItem?.id]);
 
   // Convert meters to mm for display
   const toMM = (val: number) => Math.round(val * 1000);
