@@ -198,44 +198,57 @@ const App: React.FC = () => {
           <button
             onClick={async () => {
               try {
+                console.log('🎨 Starting PNG export...');
+
                 // Remember current measurement state
                 const wasShowingMeasurements = showMeasurements;
+                console.log('Current measurements visible:', wasShowingMeasurements);
 
                 // Temporarily enable measurements for export
                 if (!wasShowingMeasurements) {
+                  console.log('Enabling measurements for export...');
                   setShowMeasurements(true);
                   // Wait for React to render the measurements
                   await new Promise(resolve => setTimeout(resolve, 100));
                 }
 
                 // Import and use html2canvas
+                console.log('Loading html2canvas...');
                 const html2canvas = (await import('html2canvas')).default;
+                console.log('html2canvas loaded successfully');
+
                 const canvasContainer = document.getElementById('room-canvas') as HTMLElement;
+                console.log('Canvas container:', canvasContainer);
 
                 if (canvasContainer) {
+                  console.log('Generating canvas screenshot...');
                   const canvas = await html2canvas(canvasContainer, {
                     backgroundColor: '#ffffff',
                     scale: 2, // Higher quality
                   });
+                  console.log('Screenshot generated:', canvas.width, 'x', canvas.height);
 
                   // Create download link
                   const link = document.createElement('a');
                   const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
                   link.download = `${currentProject.name}-${timestamp}.png`;
                   link.href = canvas.toDataURL('image/png');
+                  console.log('Triggering download:', link.download);
                   link.click();
 
                   // Restore original measurement state
                   if (!wasShowingMeasurements) {
                     setShowMeasurements(false);
                   }
+
+                  console.log('✅ PNG export successful!');
                 } else {
-                  console.error('Canvas element not found');
+                  console.error('❌ Canvas element not found');
                   alert('无法找到画布元素，请刷新页面后重试');
                 }
               } catch (error) {
-                console.error('导出失败:', error);
-                alert('导出PNG失败，请重试');
+                console.error('❌ 导出失败:', error);
+                alert('导出PNG失败，请重试。详情请查看控制台。');
               }
             }}
             className="p-2 rounded shadow-sm border bg-white/90 backdrop-blur text-slate-600 border-slate-200 hover:bg-slate-50 transition-colors flex items-center gap-2 text-sm font-medium"
