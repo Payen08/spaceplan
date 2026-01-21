@@ -36,17 +36,24 @@ const App: React.FC = () => {
     setSelectedId(null);
   }, [currentProject.id]);
 
+  // Cloud Sync Hook
+  const cloudSync = useCloudSync();
+
   // Auto-save to localStorage when items or dimensions change
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       updateCurrentProject({ dimensions, items });
+
+      // Auto-sync to cloud if configured
+      if (cloudSync) {
+        cloudSync.saveToCloud(currentProject).catch(err => {
+          console.error('Auto cloud sync failed:', err);
+        });
+      }
     }, 500); // Debounce 500ms
 
     return () => clearTimeout(timeoutId);
-  }, [items, dimensions]);
-
-  // Cloud Sync
-  const cloudSync = useCloudSync();
+  }, [items, dimensions, currentProject, cloudSync, updateCurrentProject]);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -246,6 +253,23 @@ const App: React.FC = () => {
 
       {/* Main Canvas Area */}
       <main className="flex-1 relative flex flex-col">
+        {/* Cloud Sync Status - Top Right */}
+        <div className="absolute top-4 left-4 z-20 flex items-center gap-2 bg-white/90 backdrop-blur-sm px-3 py-2 rounded-lg shadow-sm border border-slate-200">
+          <span className="text-xs text-slate-500">同步ID:</span>
+          <code className="text-xs font-mono bg-slate-100 px-2 py-1 rounded">
+            {currentProject.id.slice(0, 8)}...
+          </code>
+          {cloudSync.status.isSyncing ? (
+            <span className="text-xs text-blue-500">🔄 同步中</span>
+          ) : cloudSync.status.lastSyncTime ? (
+            <span className="text-xs text-green-500" title={`最后同步: ${cloudSync.status.lastSyncTime.toLocaleString()}`}>
+              ✓ 已同步
+            </span>
+          ) : (
+            <span className="text-xs text-gray-400">⚪ 未配置</span>
+          )}
+        </div>
+
         {/* Controls Bar: Undo/Redo + Measurements + Export */}
         <div className="absolute top-4 right-4 z-20 flex gap-2">
           {/* PNG Export Button */}
