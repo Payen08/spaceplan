@@ -200,41 +200,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </div>
 
-      {/* Manual Save Button - Prominent */}
-      {!isReadOnly && cloudSync.getAccountId() && (
-        <div className="border-t border-slate-200 pt-4 pb-2">
-          <button
-            onClick={async () => {
-              const updatedProject = {
-                ...currentProject,
-                dimensions,
-                items: selectedItem ? items : currentProject.items,
-                updatedAt: Date.now()
-              };
-              const success = await cloudSync.saveToCloud(updatedProject);
-              if (success) {
-                alert('✅ 已保存到云端！');
-              } else {
-                alert('❌ 保存失败：' + (cloudSync.status.syncError || '未知错误'));
-              }
-            }}
-            disabled={cloudSync.status.isSyncing}
-            className="w-full px-4 py-3 bg-green-500 hover:bg-green-600 disabled:bg-gray-300 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
-          >
-            {cloudSync.status.isSyncing ? (
-              <>🔄 保存中...</>
-            ) : (
-              <>💾 保存到云端</>
-            )}
-          </button>
-          {cloudSync.status.lastSyncTime && (
-            <p className="text-xs text-gray-500 mt-1 text-center">
-              上次: {cloudSync.status.lastSyncTime.toLocaleTimeString()}
-            </p>
-          )}
-        </div>
-      )}
-
       {/* Main Content Area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-6">
 
