@@ -358,9 +358,9 @@ export const RoomCanvas: React.FC<RoomCanvasProps> = ({
 
 
         // 4. Boundary Check - Account for rotation
-        const isRotated = d.rotation % 180 !== 0;
-        const effectiveWidth = isRotated ? currentDepth : currentWidth;
-        const effectiveDepth = isRotated ? currentWidth : currentDepth;
+        const isRotated90 = d.rotation % 180 !== 0;
+        const effectiveWidth = isRotated90 ? currentDepth : currentWidth;
+        const effectiveDepth = isRotated90 ? currentWidth : currentDepth;
 
         const bounds = {
           minX: 0,
