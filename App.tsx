@@ -4,6 +4,7 @@ import { Sidebar } from './components/Sidebar';
 import { Dimensions, FurnitureItem, FurnitureType } from './types';
 import { generateLayoutSuggestion } from './services/geminiService';
 import { useProjects } from './hooks/useProjects';
+import { exportCanvasAsPNG } from './utils/exportPNG';
 
 const App: React.FC = () => {
   // Project Management

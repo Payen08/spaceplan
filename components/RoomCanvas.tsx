@@ -357,12 +357,16 @@ export const RoomCanvas: React.FC<RoomCanvasProps> = ({
         }
 
 
-        // 4. Boundary Checks
+        // 4. Boundary Check - Account for rotation
+        const isRotated = d.rotation % 180 !== 0;
+        const effectiveWidth = isRotated ? currentDepth : currentWidth;
+        const effectiveDepth = isRotated ? currentWidth : currentDepth;
+
         const bounds = {
           minX: 0,
-          maxX: dimensions.width - currentWidth,
+          maxX: dimensions.width - effectiveWidth,
           minY: 0,
-          maxY: dimensions.length - currentDepth,
+          maxY: dimensions.length - effectiveDepth,
         };
 
         newX = Math.max(bounds.minX, Math.min(newX, bounds.maxX));
