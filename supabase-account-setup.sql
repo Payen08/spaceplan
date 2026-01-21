@@ -43,6 +43,13 @@ ON accounts FOR INSERT
 TO public 
 WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Allow public update on accounts" ON accounts;
+CREATE POLICY "Allow public update on accounts" 
+ON accounts FOR UPDATE 
+TO public 
+USING (true)
+WITH CHECK (true);
+
 -- 7. 项目表策略 - 允许所有人读写
 DROP POLICY IF EXISTS "Allow public read on projects" ON projects;
 CREATE POLICY "Allow public read on projects" 

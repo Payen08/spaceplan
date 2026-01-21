@@ -35,7 +35,7 @@ const App: React.FC = () => {
     setHistory([currentProject.items]);
     setHistoryIndex(0);
     setSelectedId(null);
-  }, [currentProject.id]);
+  }, [currentProject.id, currentProject.updatedAt]); // Also watch updatedAt to catch content changes
 
   // Cloud Sync Hook
   const cloudSync = useCloudSync();
