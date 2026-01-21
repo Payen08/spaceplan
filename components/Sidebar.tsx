@@ -77,6 +77,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
   // Handle item dimension changes (Input is mm/degrees, convert mm to meters)
   const handleItemDimChange = (val: string, field: 'width' | 'depth' | 'rotation' | 'lightRange') => {
     if (!selectedItem) return;
+
+    // Allow empty string temporarily (will reset on blur)
+    if (val === '') {
+      return;
+    }
+
     const num = parseFloat(val);
     if (!isNaN(num) && num >= 0) {
       // lightRange is in meters, width/depth entered in mm but stored in meters
@@ -285,6 +291,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         type="number"
                         value={selectedItem.rotation}
                         onChange={(e) => handleItemDimChange(e.target.value, 'rotation')}
+                        onBlur={(e) => {
+                          if (e.target.value === '' || isNaN(parseFloat(e.target.value))) {
+                            onUpdateItem({ ...selectedItem, rotation: 0 });
+                          }
+                        }}
                         className="w-full px-2 py-1 bg-white border border-indigo-200 rounded text-xs"
                       />
                       <button
