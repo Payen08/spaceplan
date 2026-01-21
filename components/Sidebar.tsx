@@ -289,13 +289,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <div className="flex gap-1">
                       <input
                         type="number"
-                        value={selectedItem.rotation}
-                        onChange={(e) => handleItemDimChange(e.target.value, 'rotation')}
+                        value={rotationInput}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setRotationInput(val);
+                          if (val !== '') {
+                            const num = parseFloat(val);
+                            if (!isNaN(num)) {
+                              onUpdateItem({ ...selectedItem, rotation: num });
+                            }
+                          }
+                        }}
                         onBlur={(e) => {
-                          if (e.target.value === '' || isNaN(parseFloat(e.target.value))) {
+                          const val = e.target.value;
+                          if (val === '' || isNaN(parseFloat(val))) {
+                            setRotationInput('0');
                             onUpdateItem({ ...selectedItem, rotation: 0 });
                           }
                         }}
+                        onFocus={(e) => e.target.select()}
                         className="w-full px-2 py-1 bg-white border border-indigo-200 rounded text-xs"
                       />
                       <button
