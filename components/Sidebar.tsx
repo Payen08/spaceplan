@@ -17,6 +17,7 @@ interface SidebarProps {
   onSwitchProject: (id: string) => void;
   onRenameProject: (id: string, name: string) => void;
   onDeleteProject: (id: string) => void;
+  cloudSync: ReturnType<typeof import('../hooks/useCloudSync').useCloudSync>;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -34,6 +35,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onSwitchProject,
   onRenameProject,
   onDeleteProject,
+  cloudSync,
 }) => {
   const [isEditingProjectName, setIsEditingProjectName] = useState(false);
   const [editingProjectName, setEditingProjectName] = useState(currentProject.name);
@@ -193,6 +195,85 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </div>
 
+      {/* CLOUD SYNC SECTION */}
+      <div className="border-t border-slate-200 pt-4 space-y-3">
+        <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+          <span>☁️</span> 云同步
+        </h2>
+
+        {/* Save to Cloud */}
+        <button
+          onClick={async () => {
+            const success = await cloudSync.saveToCloud(currentProject);
+            if (success) {
+              alert(`✅ 项目已保存到云端！\n\n项目ID: ${currentProject.id}\n\n在其他设备输入此ID即可加载项目`);
+            } else if (cloudSync.status.syncError) {
+              alert(`❌ 保存失败：${cloudSync.status.syncError}`);
+            }
+          }}
+          disabled={cloudSync.status.isSyncing}
+          className="w-full px-3 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white rounded text-sm font-medium transition-colors"
+        >
+          {cloudSync.status.isSyncing ? '同步中...' : '💾 保存到云端'}
+        </button>
+
+        {/* Load from Cloud */}
+        <div className="space-y-2">
+          <label className="block text-xs font-medium text-slate-600">从云端加载</label>
+          <input
+            type="text"
+            placeholder="输入项目ID"
+            onKeyDown={async (e) => {
+              if (e.key === 'Enter') {
+                const id = (e.target as HTMLInputElement).value.trim();
+                if (!id) return;
+
+                const project = await cloudSync.loadFromCloud(id);
+                if (project) {
+                  onSwitchProject(project.id);
+                  alert(`✅ 项目已从云端加载！\n${project.name}`);
+                  (e.target as HTMLInputElement).value = '';
+                } else if (cloudSync.status.syncError) {
+                  alert(`❌ 加载失败：${cloudSync.status.syncError}`);
+                }
+              }
+            }}
+            className="w-full px-3 py-2 bg-white border border-slate-200 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          />
+          <p className="text-xs text-slate-400">按Enter加载</p>
+        </div>
+
+        {/* Sync Status */}
+        {cloudSync.status.lastSyncTime && (
+          <div className="text-xs text-green-600 flex items-center gap-1">
+            <span>✓</span>
+            <span>最后同步: {cloudSync.status.lastSyncTime.toLocaleTimeString()}</span>
+          </div>
+        )}
+
+        {/* Current Project ID */}
+        <div className="bg-slate-50 p-2 rounded">
+          <p className="text-xs text-slate-500 mb-1">当前项目ID</p>
+          <div className="flex gap-1">
+            <code className="text-xs bg-white px-2 py-1 rounded border border-slate-200 flex-1 overflow-hidden text-ellipsis">
+              {currentProject.id}
+            </code>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(currentProject.id);
+                alert('✅ 项目ID已复制！');
+              }}
+              className="px-2 py-1 bg-slate-200 hover:bg-slate-300 rounded text-xs"
+              title="复制ID"
+            >
+              📋
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      {/* Main Content Area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-6">
 
         {/* ROOM DIMENSIONS */}

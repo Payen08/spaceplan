@@ -4,6 +4,7 @@ import { Sidebar } from './components/Sidebar';
 import { Dimensions, FurnitureItem, FurnitureType } from './types';
 import { generateLayoutSuggestion } from './services/geminiService';
 import { useProjects } from './hooks/useProjects';
+import { useCloudSync } from './hooks/useCloudSync';
 import { exportCanvasAsPNG } from './utils/exportPNG';
 
 const App: React.FC = () => {
@@ -43,6 +44,9 @@ const App: React.FC = () => {
 
     return () => clearTimeout(timeoutId);
   }, [items, dimensions]);
+
+  // Cloud Sync
+  const cloudSync = useCloudSync();
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -237,6 +241,7 @@ const App: React.FC = () => {
         onSwitchProject={switchProject}
         onRenameProject={renameProject}
         onDeleteProject={deleteProject}
+        cloudSync={cloudSync}
       />
 
       {/* Main Canvas Area */}

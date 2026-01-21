@@ -117,6 +117,34 @@ export const RoomCanvas: React.FC<RoomCanvasProps> = ({
     onConfirm: () => { }
   });
 
+  // Helper: Calculate AABB for rotated furniture
+  const getRotatedAABB = (width: number, depth: number, rotation: number) => {
+    const rad = (rotation * Math.PI) / 180;
+    const cos = Math.abs(Math.cos(rad));
+    const sin = Math.abs(Math.sin(rad));
+
+    const aabbWidth = width * cos + depth * sin;
+    const aabbHeight = width * sin + depth * cos;
+
+    // Calculate corners after rotation
+    const corners = [
+      { x: 0, y: 0 },
+      { x: width * Math.cos(rad), y: width * Math.sin(rad) },
+      { x: -depth * Math.sin(rad), y: depth * Math.cos(rad) },
+      { x: width * Math.cos(rad) - depth * Math.sin(rad), y: width * Math.sin(rad) + depth * Math.cos(rad) }
+    ];
+
+    const minX = Math.min(...corners.map(c => c.x));
+    const minY = Math.min(...corners.map(c => c.y));
+
+    return {
+      width: aabbWidth,
+      height: aabbHeight,
+      offsetX: -minX,
+      offsetY: -minY
+    };
+  };
+
   // Helper to sync D3 drag behavior with React state
   useEffect(() => {
     if (!svgRef.current) return;
@@ -358,7 +386,7 @@ export const RoomCanvas: React.FC<RoomCanvasProps> = ({
 
 
 
-        // 4. Boundary Checks - use occupied space not original dimensions
+        // 4. Boundary Checks
         const bounds = {
           minX: 0,
           maxX: dimensions.width - currentWidth,
