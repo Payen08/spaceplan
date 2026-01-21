@@ -225,6 +225,18 @@ const App: React.FC = () => {
                   const canvas = await html2canvas(canvasContainer, {
                     backgroundColor: '#ffffff',
                     scale: 2, // Higher quality
+                    allowTaint: true,
+                    useCORS: true,
+                    logging: false, // Disable verbose logging
+                    // Ignore problematic elements
+                    ignoreElements: (element) => {
+                      // Skip any element with oklab or other unsupported colors
+                      const style = window.getComputedStyle(element);
+                      return style.color?.includes('oklab') ||
+                        style.backgroundColor?.includes('oklab') ||
+                        style.fill?.includes('oklab') ||
+                        style.stroke?.includes('oklab');
+                    }
                   });
                   console.log('Screenshot generated:', canvas.width, 'x', canvas.height);
 
