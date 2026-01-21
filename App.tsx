@@ -240,20 +240,31 @@ const App: React.FC = () => {
                   });
                   console.log('Screenshot generated:', canvas.width, 'x', canvas.height);
 
-                  // Create download link
-                  const link = document.createElement('a');
-                  const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-                  link.download = `${currentProject.name}-${timestamp}.png`;
-                  link.href = canvas.toDataURL('image/png');
-                  console.log('Triggering download:', link.download);
-                  link.click();
+                  // Create download link using blob instead of data URL
+                  canvas.toBlob((blob) => {
+                    if (blob) {
+                      const url = URL.createObjectURL(blob);
+                      const link = document.createElement('a');
+                      const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+                      link.download = `${currentProject.name}-${timestamp}.png`;
+                      link.href = url;
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+
+                      // Clean up the blob URL after a short delay
+                      setTimeout(() => URL.revokeObjectURL(url), 100);
+                      console.log('✅ PNG export successful!');
+                    } else {
+                      console.error('❌ Failed to create blob');
+                      alert('PNG转换失败，请重试');
+                    }
+                  }, 'image/png');
 
                   // Restore original measurement state
                   if (!wasShowingMeasurements) {
                     setShowMeasurements(false);
                   }
-
-                  console.log('✅ PNG export successful!');
                 } else {
                   console.error('❌ Canvas element not found');
                   alert('无法找到画布元素，请刷新页面后重试');
