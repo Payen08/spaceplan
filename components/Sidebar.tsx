@@ -171,6 +171,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
             </svg>
           </button>
+          {!isReadOnly && cloudSync.getAccountId() && (
+            <button
+              onClick={async () => {
+                const updatedProject = { ...currentProject, dimensions, updatedAt: Date.now() };
+                const success = await cloudSync.saveToCloud(updatedProject);
+                alert(success ? '已保存到云端' : '保存失败：' + (cloudSync.status.syncError || '未知错误'));
+              }}
+              disabled={cloudSync.status.isSyncing}
+              className="px-3 py-1.5 bg-green-500 hover:bg-green-600 disabled:bg-gray-300 text-white rounded text-sm font-medium transition-colors"
+              title="保存到云端"
+            >
+              {cloudSync.status.isSyncing ? '保存中' : '保存'}
+            </button>
+          )}
           <button
             onClick={() => onCreateProject()}
             className="p-1.5 text-white bg-indigo-600 hover:bg-indigo-700 rounded transition-colors"
