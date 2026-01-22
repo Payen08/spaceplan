@@ -318,6 +318,27 @@ const App: React.FC = () => {
             />
           </div>
 
+          {/* Save button - next to account ID */}
+          {cloudSync.getAccountId() && !shareMode.isReadOnly && (
+            <button
+              onClick={async () => {
+                const updatedProject = {
+                  ...currentProject,
+                  dimensions,
+                  items,
+                  updatedAt: Date.now()
+                };
+                const success = await cloudSync.saveToCloud(updatedProject);
+                alert(success ? '已保存到云端' : '保存失败：' + (cloudSync.status.syncError || '未知错误'));
+              }}
+              disabled={cloudSync.status.isSyncing}
+              className="px-3 py-1.5 bg-green-500 hover:bg-green-600 disabled:bg-gray-300 text-white rounded text-sm font-medium transition-colors shadow-sm"
+              title="保存到云端"
+            >
+              {cloudSync.status.isSyncing ? '保存中' : '保存'}
+            </button>
+          )}
+
           {/* Sync Status Badge */}
           {cloudSync.status.isSyncing ? (
             <span className="text-xs px-2 py-1 bg-blue-50 text-blue-600 rounded border border-blue-200">🔄 同步中</span>
